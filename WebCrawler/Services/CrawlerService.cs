@@ -15,6 +15,7 @@ namespace WebCrawler.Services
 
         public async Task CrawlAsync(string url)
         {
+            await Task.Delay(200);
             var web = new HtmlWeb();
             var doc = await web.LoadFromWebAsync(url);
 
@@ -34,17 +35,13 @@ namespace WebCrawler.Services
             var links = doc.DocumentNode.SelectNodes("//a[@href]")
                         ?.Select(node => node.Attributes["href"].Value)
                         ?.Where(link => Uri.IsWellFormedUriString(link, UriKind.Absolute))
-                        ?.Distinct();
+                        ?.Distinct()
+                        ?.ToList();
 
             if (links != null)
             {
-                foreach (var link in links)
-                {
-                    if (!_context.Pages.Any(p => p.Url == link))
-                    {
-                        await CrawlAsync(link);
-                    }
-                }
+                var tasks = links.Select(link => CrawlAsync(link)).ToArray();
+                await Task.WhenAll(tasks);
             }
         }
 
