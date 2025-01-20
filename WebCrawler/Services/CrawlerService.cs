@@ -29,9 +29,7 @@ namespace WebCrawler.Services
                 Content = content,
                 Keywords = keywords.Select(k => new Keyword { Word = k }).ToList()
             };
-            _context.Pages.Add(page);
-            await _context.SaveChangesAsync();
-
+            await AddPageAsync(page);
             var links = doc.DocumentNode.SelectNodes("//a[@href]")
                         ?.Select(node => node.Attributes["href"].Value)
                         ?.Where(link => Uri.IsWellFormedUriString(link, UriKind.Absolute))
@@ -57,6 +55,15 @@ namespace WebCrawler.Services
             return await _context.Pages
                 .Where(p => p.Keywords.Any(k => k.Word.Contains(keyword)))
                 .ToListAsync();
+        }
+        public async Task AddPageAsync(Page page)
+        {
+            var exists = await _context.Pages.AnyAsync(p => p.Url == page.Url);
+            if (!exists)
+            {
+                _context.Pages.Add(page);
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }
