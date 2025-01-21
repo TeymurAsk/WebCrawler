@@ -12,7 +12,7 @@ namespace WebCrawler.Services
         {
             _context = context;
         }
-
+        // recursive func for scraping + DFS
         public async Task CrawlAsync(string url)
         {
             await Task.Delay(200);
@@ -42,7 +42,7 @@ namespace WebCrawler.Services
                 await Task.WhenAll(tasks);
             }
         }
-
+        // extracting only lowercase, cause there is a possible bug
         private IEnumerable<string> ExtractKeywords(string content)
         {
             return content.Split(new[] { ' ', '\n', '\r', ',', '.', '!', '?' }, StringSplitOptions.RemoveEmptyEntries)
@@ -50,12 +50,14 @@ namespace WebCrawler.Services
                           .Select(word => word.ToLowerInvariant())
                           .Distinct();
         }
+        // Keyword has to be a lowercase
         public async Task<List<Page>> SearchPagesByKeyword(string keyword)
         {
             return await _context.Pages
                 .Where(p => p.Keywords.Any(k => k.Word.Contains(keyword)))
                 .ToListAsync();
         }
+        
         public async Task AddPageAsync(Page page)
         {
             var exists = await _context.Pages.AnyAsync(p => p.Url == page.Url);
